@@ -7,13 +7,50 @@
     <style>
         body, html { margin: 0; padding: 0; overflow: hidden; }
         #gameCanvas { background-color: #87CEEB; }
+        #gameOverOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1;
+        }
+
+        #gameOverMessage {
+            font-size: 32px;
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        #playAgainButton {
+            font-size: 24px;
+            padding: 10px 20px;
+        }
+        
+        #gameOverScore {
+            font-size: 24px;
+            color: white;
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
     <canvas id="gameCanvas" width="400" height="600"></canvas>
+    <div id="gameOverOverlay" style="display: none;">
+        <div id="gameOverMessage">GAME OVER</div>
+        <div id="gameOverScore"></div>
+        <button id="playAgainButton">Play again</button>
+    </div>
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
+
+        let isGameOver = false;
 
         // Game settings
         const gravity = 0.5;
@@ -24,7 +61,7 @@
         // Player
         let player = {
             x: canvas.width / 2,
-            y: canvas.height,
+            y: canvas.height - 30,
             width: 20,
             height: 20,
             speed: 5,
@@ -32,12 +69,84 @@
             velY: 0,
             jumping: false
         };
+
+        function gameOver() {
+            isGameOver = true;
+            const gameOverOverlay = document.getElementById('gameOverOverlay');
+            const gameOverScore = document.getElementById('gameOverScore');
+            gameOverScore.textContent = `Score: ${score}`;
+            gameOverOverlay.style.display = 'flex';
+        }
+        
+
+        function resetGame() {
+            isGameOver = false
+            const gameOverOverlay = document.getElementById('gameOverOverlay');
+            gameOverOverlay.style.display = 'none';
+            score = 0;
+            player.x = canvas.width / 2;
+            player.y = canvas.height - 30;
+            player.velX = 0;
+            player.velY = 0;
+            player.jumping = false;
+            platforms = [];
+            lastPlatformY = canvas.height - platformGap;
+            platforms.push({
+                x: 0,
+                y: canvas.height - 10,
+                width: canvas.width,
+                height: 10,
+                timer: 0,
+                falling: false,
+                hasEnemy: false,
+                enemyType: '',
+                enemyX: 0,
+                enemyVelX: 0
+            });
+            while (lastPlatformY > 0) {
+                let platform = {
+                    x: Math.random() * (canvas.width - 50),
+                    y: lastPlatformY,
+                    width: 100,
+                    height: 10,
+                    timer: 0,
+                    falling: false,
+                    hasEnemy: Math.random() < 0.05,
+                    enemyType: Math.random() < 0.5 ? 'Type1' : 'Type2',
+                    enemyX: 0,
+                    enemyVelX: 1
+                };
+                platform.enemyX = Math.random() * (platform.width - 10);
+                platforms.push(platform);
+                lastPlatformY -= platformGap;
+            }
+        }
+
+        // Add event listener for the "Play again" button
+        const playAgainButton = document.getElementById('playAgainButton');
+        playAgainButton.addEventListener('click', resetGame);
+
         let currentPlatformIndex = -1;
         let previousPlatformIndex = -1;
 
         // Platforms
         let platforms = [];
         let lastPlatformY = canvas.height - platformGap;
+
+        // Create the initial platform on the ground
+        platforms.push({
+            x: 0,
+            y: canvas.height - 10,
+            width: canvas.width,
+            height: 10,
+            timer: 0,
+            falling: false,
+            hasEnemy: false,
+            enemyType: '',
+            enemyX: 0,
+            enemyVelX: 0
+        });
+
         while (lastPlatformY > 0) {
             let platform = {
                 x: Math.random() * (canvas.width - 50),
@@ -51,10 +160,10 @@
                 enemyX: 0, // Initial enemy position
                 enemyVelX: 1 // Enemy velocity for Type2
             };
-            
+
             // Set random enemy position for both Type1 and Type2 enemies
             platform.enemyX = Math.random() * (platform.width - 10);
-            
+
             platforms.push(platform);
             lastPlatformY -= platformGap;
         }
@@ -75,7 +184,12 @@
             keys[e.keyCode] = false;
         });
         
+
+        
         function updateGame() {
+
+            
+
             // Check key inputs
             if (keys[39]) { // right arrow
                 if (player.velX < player.speed) {
@@ -149,71 +263,74 @@
             let landingPoints = false;
             
             // Platform collision and timer update
-    platforms.forEach((platform, index) => {
-        if (
-            player.x < platform.x + platform.width &&
-            player.x + player.width > platform.x &&
-            player.y + player.height > platform.y &&
-            player.y + player.height < platform.y + platform.height &&
-            player.velY >= 0
-        ) {
-            player.jumping = false;
-            player.velY = 0;
-            player.y = platform.y - player.height;
-            if (currentPlatformIndex !== index) {
-                previousPlatformIndex = currentPlatformIndex;
-                currentPlatformIndex = index;
+            platforms.forEach((platform, index) => {
+            if (
+                player.x < platform.x + platform.width &&
+                player.x + player.width > platform.x &&
+                player.y + player.height > platform.y &&
+                player.y + player.height < platform.y + platform.height &&
+                player.velY >= 0
+            ) {
+                player.jumping = false;
+                player.velY = 0;
+                player.y = platform.y - player.height;
+                if (currentPlatformIndex !== index) {
+                    previousPlatformIndex = currentPlatformIndex;
+                    currentPlatformIndex = index;
+                    
+                    // Award points if the player lands on a platform with a bigger index and points haven't been awarded yet
+                    if (currentPlatformIndex > previousPlatformIndex && !landingPoints && isGameOver == false) {
+                        score += 10;
+                        if (currentPlatformIndex - previousPlatformIndex > 1) {
+                            score += 10 * (currentPlatformIndex - previousPlatformIndex - 1);
+                        }
+                        landingPoints = true; // Set the flag to indicate points have been awarded
+                    }
+                }
                 
-                // Award points if the player lands on a platform with a bigger index and points haven't been awarded yet
-                if (currentPlatformIndex > previousPlatformIndex && !landingPoints) {
-                    score += 10;
-                    if (currentPlatformIndex - previousPlatformIndex > 1) {
-                        score += 10 * (currentPlatformIndex - previousPlatformIndex - 1);
-                    }
-                    landingPoints = true; // Set the flag to indicate points have been awarded
-                }
+                // Start the timer for the current platform
+                platform.timer += 1 / 30; // Assuming 60 frames per second
+            } else {
+                // Reset the timer if the player is not on the platform
+                platform.timer = 0;
+            }
+                
+            // Make the platform fall if the timer exceeds 3 seconds
+            if (platform.timer > 3 && !platform.falling) {
+                platform.falling = true;
             }
             
-            // Start the timer for the current platform
-            platform.timer += 1 / 30; // Assuming 60 frames per second
-        } else {
-            // Reset the timer if the player is not on the platform
-            platform.timer = 0;
-        }
-            
-        // Make the platform fall if the timer exceeds 3 seconds
-        if (platform.timer > 3 && !platform.falling) {
-            platform.falling = true;
-        }
-        
-        // Update the position of falling platforms
-        if (platform.falling) {
-            platform.y += 10; // Adjust the falling speed as needed
-        }
-
-        // Update enemy position for Type2 enemies
-        if (platform.hasEnemy && platform.enemyType === 'Type2') {
-            platform.enemyX += platform.enemyVelX;
-            if (platform.enemyX <= 0 || platform.enemyX >= platform.width - 10) {
-                platform.enemyVelX *= -1;
+            // Update the position of falling platforms
+            if (platform.falling && index!= 0) {
+                platform.y += 10; // Adjust the falling speed as needed
             }
-        }
 
-        // Check collision with enemies
-        if (platform.hasEnemy) {
-                    if (
-                        player.x < platform.x + platform.enemyX + 10 &&
-                        player.x + player.width > platform.x + platform.enemyX &&
-                        player.y < platform.y &&
-                        player.y + player.height > platform.y - 10
-                    ) {
-                        // Player dies
-                        alert('Game Over');
-                        location.reload();
-                    }
+            // Update enemy position for Type2 enemies
+            if (platform.hasEnemy && platform.enemyType === 'Type2') {
+                platform.enemyX += platform.enemyVelX;
+                if (platform.enemyX <= 0 || platform.enemyX >= platform.width - 10) {
+                    platform.enemyVelX *= -1;
+                }
+            }
+
+            // Check collision with enemies
+            if (platform.hasEnemy) {
+                if (
+                    player.x < platform.x + platform.enemyX + 10 &&
+                    player.x + player.width > platform.x + platform.enemyX &&
+                    player.y < platform.y &&
+                    player.y + player.height > platform.y - 10
+                ) {
+                    // Player dies
+                    gameOver();
+                }
+            }
+
+                if (player.y+player.height == canvas.height) {
+                    gameOver();
                 }
 
-    });
+            });
             
             // Clear canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -227,12 +344,12 @@
                 ctx.fillStyle = 'black';
                 ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
                 // Add text labels for platforms with indices divisible by 10
-                if ((index+1) % 10 === 0) {
+                if ((index) % 10 === 0) {
                     ctx.fillStyle = 'white';
                     ctx.font = '12px Arial';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
-                    ctx.fillText((index+1).toString(), platform.x + platform.width / 2, platform.y + platform.height / 2);
+                    ctx.fillText((index).toString(), platform.x + platform.width / 2, platform.y + platform.height / 2);
                 }
                 // Draw enemies
                 if (platform.hasEnemy) {
@@ -244,7 +361,7 @@
             // Display platform height
             ctx.fillStyle = 'white';
             ctx.font = '16px Arial';
-            ctx.fillText(`currentPlatformIndex: ${currentPlatformIndex}`, 10, 30);
+            ctx.fillText(`player.y: ${player.y}`, 10, 30);
             ctx.fillText(`previousPlatformIndex: ${previousPlatformIndex}`, 10, 100);
             // Display score
             ctx.fillText(`Score: ${score}`, 10, 130);
@@ -253,6 +370,7 @@
         }
 
         updateGame();
+        
     </script>
 </body>
 </html>
