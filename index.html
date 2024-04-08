@@ -43,7 +43,9 @@
                 x: Math.random() * (canvas.width - 50),
                 y: lastPlatformY,
                 width: 100,
-                height: 10
+                height: 10,
+                timer: 0, // Add a timer property for each platform
+                falling: false // Add a falling property for each platform
             });
             lastPlatformY -= platformGap;
         }
@@ -124,33 +126,49 @@
             
             let landingPoints = false;
             
-            // Platform collision
-            platforms.forEach((platform, index) => {
-                if (
-                    player.x < platform.x + platform.width &&
-                    player.x + player.width > platform.x &&
-                    player.y + player.height > platform.y &&
-                    player.y + player.height < platform.y + platform.height &&
-                    player.velY >= 0
-                ) {
-                    player.jumping = false;
-                    player.velY = 0;
-                    player.y = platform.y - player.height;
-                    if (currentPlatformIndex !== index) {
-                        previousPlatformIndex = currentPlatformIndex;
-                        currentPlatformIndex = index;
-                        
-                        // Award points if the player lands on a platform with a bigger index and points haven't been awarded yet
-                        if (currentPlatformIndex > previousPlatformIndex && !landingPoints) {
-                            score += 10
-                            if(currentPlatformIndex - previousPlatformIndex >1){
-                                score += 10*(currentPlatformIndex - previousPlatformIndex -1)
-                            }
-                            landingPoints = true; // Set the flag to indicate points have been awarded
-                        }
+            // Platform collision and timer update
+    platforms.forEach((platform, index) => {
+        if (
+            player.x < platform.x + platform.width &&
+            player.x + player.width > platform.x &&
+            player.y + player.height > platform.y &&
+            player.y + player.height < platform.y + platform.height &&
+            player.velY >= 0
+        ) {
+            player.jumping = false;
+            player.velY = 0;
+            player.y = platform.y - player.height;
+            if (currentPlatformIndex !== index) {
+                previousPlatformIndex = currentPlatformIndex;
+                currentPlatformIndex = index;
+                
+                // Award points if the player lands on a platform with a bigger index and points haven't been awarded yet
+                if (currentPlatformIndex > previousPlatformIndex && !landingPoints) {
+                    score += 10;
+                    if (currentPlatformIndex - previousPlatformIndex > 1) {
+                        score += 10 * (currentPlatformIndex - previousPlatformIndex - 1);
                     }
+                    landingPoints = true; // Set the flag to indicate points have been awarded
                 }
-            });
+            }
+            
+            // Start the timer for the current platform
+            platform.timer += 1 / 30; // Assuming 60 frames per second
+        } else {
+            // Reset the timer if the player is not on the platform
+            platform.timer = 0;
+        }
+        
+        // Make the platform fall if the timer exceeds 3 seconds
+        if (platform.timer > 3 && !platform.falling) {
+            platform.falling = true;
+        }
+        
+        // Update the position of falling platforms
+        if (platform.falling) {
+            platform.y += 10; // Adjust the falling speed as needed
+        }
+    });
             
             // Clear canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
