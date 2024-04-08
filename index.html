@@ -181,7 +181,14 @@
             platforms.forEach((platform, index) => {
                 ctx.fillStyle = 'black';
                 ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
-                
+                // Add text labels for platforms with indices divisible by 10
+                if ((index+1) % 10 === 0) {
+                    ctx.fillStyle = 'white';
+                    ctx.font = '12px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText((index+1).toString(), platform.x + platform.width / 2, platform.y + platform.height / 2);
+                }
             });
 
             // Display platform height
