@@ -6,7 +6,7 @@
     <title>Platformer Game with Screen Scroll</title>
     <style>
         body, html { margin: 0; padding: 0; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f0f0f0; }
-        #gameCanvas { background-color: #87CEEB; }
+        /* #gameCanvas { background-color: #87CEEB; } */
         #gameOverOverlay {
             position: absolute;
             top: 0;
@@ -85,6 +85,20 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
+        const backgroundImage = new Image();
+        backgroundImage.src = 'photos/background.jpg';  
+        const platformImage = new Image();
+        platformImage.src = 'photos/platfrom.jpg';
+
+        const playerImage = new Image();
+        playerImage.src = 'photos/player.png';
+
+        const enemyGreenImage = new Image();
+        enemyGreenImage.src = 'photos/enemy.png';
+
+        const enemyBlueImage = new Image();
+        enemyBlueImage.src = 'photos/enemy.png';
+
         let topScores = [];
 
         let isGameOver = false; 
@@ -93,14 +107,14 @@
         const gravity = 0.5;
         const friction = 0.8;
         const baseJump = -10; // Base jump velocity
-        const platformGap = 80; // Gap between platforms
+        const platformGap = 100; // Gap between platforms
 
-        // Player
+         // Player
         let player = {
             x: canvas.width / 2,
-            y: canvas.height - 30,
-            width: 20,
-            height: 20,
+            y: canvas.height - 70,
+            width: 40,
+            height: 50,
             speed: 5,
             velX: 0,
             velY: 0,
@@ -151,7 +165,7 @@
             gameOverOverlay.style.display = 'none';
             score = 0;
             player.x = canvas.width / 2;
-            player.y = canvas.height - 30;
+            player.y = canvas.height - 70;
             player.velX = 0;
             player.velY = 0;
             player.jumping = false;
@@ -161,7 +175,7 @@
                 x: 0,
                 y: canvas.height - 10,
                 width: canvas.width,
-                height: 10,
+                height: 15,
                 timer: 0,
                 falling: false,
                 hasEnemy: false,
@@ -174,7 +188,7 @@
                     x: Math.random() * (canvas.width - 100) + 50,
                     y: lastPlatformY,
                     width: Math.random() * (250 - 140 + 1) + 140,
-                    height: 10,
+                    height: 15,
                     timer: 0,
                     falling: false,
                     hasEnemy: Math.random() < 0.05,
@@ -204,9 +218,9 @@
         // Create the initial platform on the ground
         platforms.push({
             x: 0,
-            y: canvas.height - 10,
+            y: canvas.height - 15,
             width: canvas.width,
-            height: 10,
+            height: 15,
             timer: 0,
             falling: false,
             hasEnemy: false,
@@ -220,7 +234,7 @@
                 x: Math.random() * (canvas.width - 100) ,
                 y: lastPlatformY,
                 width: Math.random() * (250 - 140 + 1) + 140,
-                height: 10,
+                height: 15,
                 timer: 0,
                 falling: false,
                 hasEnemy: Math.random() < 0.05, // 5% chance of having an enemy
@@ -297,7 +311,7 @@
                         x: Math.random() * (canvas.width - 100),
                         y: newPlatformY,
                         width: Math.random() * (250 - 140 + 1) + 140,
-                        height: 10,
+                        height: 15,
                         timer: 0,
                         falling: false,
                         hasEnemy: Math.random() < 0.05, // 5% chance of having an enemy
@@ -347,7 +361,7 @@
                     currentPlatformIndex = index;
                     
                     // Award points if the player lands on a platform with a bigger index and points haven't been awarded yet
-                    if (currentPlatformIndex > previousPlatformIndex && !landingPoints && isGameOver == false) {
+                    if (currentPlatformIndex > previousPlatformIndex && !landingPoints && isGameOver == false && index != 0) {
                         score += 10;
                         if (currentPlatformIndex - previousPlatformIndex > 1) {
                             score += 10 * (currentPlatformIndex - previousPlatformIndex - 1);
@@ -400,39 +414,33 @@
 
             });
             
-            // Clear canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
             
             // Draw player
-            ctx.fillStyle = 'red';
-            ctx.fillRect(player.x, player.y, player.width, player.height);
+            ctx.drawImage(playerImage, player.x, player.y, player.width, player.height);
             
             // Draw platforms
             platforms.forEach((platform, index) => {
-                ctx.fillStyle = 'black';
-                ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
+                ctx.drawImage(platformImage, platform.x, platform.y, platform.width, platform.height);
                 // Add text labels for platforms with indices divisible by 10
                 if ((index) % 10 === 0) {
                     ctx.fillStyle = 'white';
-                    ctx.font = '12px Arial';
+                    ctx.font = '18px Arial';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
                     ctx.fillText((index).toString(), platform.x + platform.width / 2, platform.y + platform.height / 2);
                 }
                 // Draw enemies
                 if (platform.hasEnemy) {
-                    ctx.fillStyle = platform.enemyType === 'Type1' ? 'green' : 'blue';
-                    ctx.fillRect(platform.x + platform.enemyX, platform.y - 10, 10, 10);
+                    const enemyImage = platform.enemyType === 'Type1' ? enemyGreenImage : enemyBlueImage;
+                    ctx.drawImage(enemyImage, platform.x + platform.enemyX, platform.y - 30, 30, 30);
                 }
             });
 
             // Display platform height
             ctx.fillStyle = 'white';
-            ctx.font = '16px Arial';
-            ctx.fillText(`player.y: ${player.y}`, 10, 30);
-            ctx.fillText(`previousPlatformIndex: ${previousPlatformIndex}`, 10, 100);
-            // Display score
-            ctx.fillText(`Score: ${score}`, 10, 130);
+            ctx.font = '20px Arial';
+            ctx.fillText(`Score: ${score}`, 50, 20);
 
             requestAnimationFrame(updateGame);
         }
