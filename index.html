@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Platformer Game with Screen Scroll</title>
     <style>
-        body, html { margin: 0; padding: 0; overflow: hidden; }
+        body, html { margin: 0; padding: 0; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f0f0f0; }
         #gameCanvas { background-color: #87CEEB; }
         #gameOverOverlay {
             position: absolute;
@@ -30,33 +30,70 @@
         #playAgainButton {
             font-size: 24px;
             padding: 10px 20px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
         }
-        
+
         #gameOverScore {
             font-size: 24px;
             color: white;
             margin-bottom: 20px;
         }
+        #leaderboard {
+            text-align: center;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #leaderboard h2 {
+            margin-top: 0;
+            font-size: 28px
+        }
+
+        #leaderboardList {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            text-align: left;
+        }
+
+        #leaderboardList li {
+            margin-bottom: 10px;
+            font-size: 20px;
+        }
     </style>
 </head>
 <body>
-    <canvas id="gameCanvas" width="400" height="600"></canvas>
+    <canvas id="gameCanvas" width="550" height="750"></canvas>
     <div id="gameOverOverlay" style="display: none;">
         <div id="gameOverMessage">GAME OVER</div>
         <div id="gameOverScore"></div>
+        <div id="leaderboard">
+            <h2>Leaderboard</h2>
+            <ol id="leaderboardList"></ol>
+        </div>
         <button id="playAgainButton">Play again</button>
     </div>
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
-        let isGameOver = false;
+        let topScores = [];
+
+        let isGameOver = false; 
 
         // Game settings
         const gravity = 0.5;
         const friction = 0.8;
         const baseJump = -10; // Base jump velocity
-        const platformGap = 70; // Gap between platforms
+        const platformGap = 80; // Gap between platforms
 
         // Player
         let player = {
@@ -76,6 +113,35 @@
             const gameOverScore = document.getElementById('gameOverScore');
             gameOverScore.textContent = `Score: ${score}`;
             gameOverOverlay.style.display = 'flex';
+
+            // Update the leaderboard
+            updateLeaderboard(score);
+        }
+
+        function updateLeaderboard(newScore) {
+            // Check if the score already exists in the leaderboard
+            const existingScoreIndex = topScores.indexOf(newScore);
+
+            if (existingScoreIndex === -1) {
+                // Add the new score to the leaderboard if it doesn't exist
+                topScores.push(newScore);
+                topScores.sort((a, b) => b - a);
+
+                // Keep only the top 10 scores
+                if (topScores.length > 10) {
+                    topScores = topScores.slice(0, 10);
+                }
+            }
+
+            // Display the leaderboard
+            const leaderboardList = document.getElementById('leaderboardList');
+            leaderboardList.innerHTML = '';
+
+            topScores.forEach((score, index) => {
+                const listItem = document.createElement('li');
+                listItem.textContent = `${index + 1}. ${score}`;
+                leaderboardList.appendChild(listItem);
+            });
         }
         
 
@@ -105,9 +171,9 @@
             });
             while (lastPlatformY > 0) {
                 let platform = {
-                    x: Math.random() * (canvas.width - 50),
+                    x: Math.random() * (canvas.width - 100) + 50,
                     y: lastPlatformY,
-                    width: 100,
+                    width: Math.random() * (250 - 140 + 1) + 140,
                     height: 10,
                     timer: 0,
                     falling: false,
@@ -120,6 +186,8 @@
                 platforms.push(platform);
                 lastPlatformY -= platformGap;
             }
+                // Restart the game loop
+                requestAnimationFrame(updateGame);
         }
 
         // Add event listener for the "Play again" button
@@ -149,9 +217,9 @@
 
         while (lastPlatformY > 0) {
             let platform = {
-                x: Math.random() * (canvas.width - 50),
+                x: Math.random() * (canvas.width - 100) ,
                 y: lastPlatformY,
-                width: 100,
+                width: Math.random() * (250 - 140 + 1) + 140,
                 height: 10,
                 timer: 0,
                 falling: false,
@@ -188,7 +256,7 @@
         
         function updateGame() {
 
-            
+        if(!isGameOver){   
 
             // Check key inputs
             if (keys[39]) { // right arrow
@@ -226,9 +294,9 @@
                 let newPlatformY = platforms[platforms.length - 1].y - platformGap;
                 if (newPlatformY > 0) {
                     let newPlatform = {
-                        x: Math.random() * (canvas.width - 50),
+                        x: Math.random() * (canvas.width - 100),
                         y: newPlatformY,
-                        width: 100,
+                        width: Math.random() * (250 - 140 + 1) + 140,
                         height: 10,
                         timer: 0,
                         falling: false,
@@ -368,6 +436,7 @@
 
             requestAnimationFrame(updateGame);
         }
+    }
 
         updateGame();
         
