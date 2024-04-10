@@ -194,7 +194,10 @@
                     hasEnemy: Math.random() < 0.05,
                     enemyType: Math.random() < 0.5 ? 'Type1' : 'Type2',
                     enemyX: 0,
-                    enemyVelX: 1
+                    enemyVelX: 1,
+                    movingVertically: Math.random() < 0.06,
+                    movingOffset: 0, // Add this line
+                    movingSpeed: 0.3 // Add this line
                 };
                 platform.enemyX = Math.random() * (platform.width - 10);
                 platforms.push(platform);
@@ -230,25 +233,27 @@
         });
 
         while (lastPlatformY > 0) {
-            let platform = {
-                x: Math.random() * (canvas.width - 100) ,
-                y: lastPlatformY,
-                width: Math.random() * (250 - 140 + 1) + 140,
-                height: 15,
-                timer: 0,
-                falling: false,
-                hasEnemy: Math.random() < 0.05, // 5% chance of having an enemy
-                enemyType: Math.random() < 0.5 ? 'Type1' : 'Type2', // 50% chance of each enemy type
-                enemyX: 0, // Initial enemy position
-                enemyVelX: 1 // Enemy velocity for Type2
-            };
+    let platform = {
+        x: Math.random() * (canvas.width - 100),
+        y: lastPlatformY,
+        width: Math.random() * (350 - 140 + 1) + 140,
+        height: 15,
+        timer: 0,
+        falling: false,
+        hasEnemy: Math.random() < 0.05,
+        enemyType: Math.random() < 0.5 ? 'Type1' : 'Type2',
+        enemyX: 0,
+        enemyVelX: 1,
+        movingVertically: Math.random() < 0.06,
+        movingOffset: 0, // Add this line
+        movingSpeed: 0.3 // Add this line
+    };
 
-            // Set random enemy position for both Type1 and Type2 enemies
-            platform.enemyX = Math.random() * (platform.width - 10);
+    platform.enemyX = Math.random() * (platform.width - 10);
 
-            platforms.push(platform);
-            lastPlatformY -= platformGap;
-        }
+    platforms.push(platform);
+    lastPlatformY -= platformGap;
+}
 
         // Score
         let score = 0;
@@ -305,27 +310,29 @@
             
              // Generate new platforms
              while (platforms[platforms.length - 1].y > platformGap) {
-                let newPlatformY = platforms[platforms.length - 1].y - platformGap;
-                if (newPlatformY > 0) {
-                    let newPlatform = {
-                        x: Math.random() * (canvas.width - 100),
-                        y: newPlatformY,
-                        width: Math.random() * (250 - 140 + 1) + 140,
-                        height: 15,
-                        timer: 0,
-                        falling: false,
-                        hasEnemy: Math.random() < 0.05, // 5% chance of having an enemy
-                        enemyType: Math.random() < 0.5 ? 'Type1' : 'Type2', // 50% chance of each enemy type
-                        enemyX: 0, // Initial enemy position
-                        enemyVelX: 1 // Enemy velocity for Type2
-                    };
-                    
-                    // Set random enemy position for both Type1 and Type2 enemies
-                    newPlatform.enemyX = Math.random() * (newPlatform.width - 10);
-                    
-                    platforms.push(newPlatform);
-                }
-            }
+    let newPlatformY = platforms[platforms.length - 1].y - platformGap;
+    if (newPlatformY > 0) {
+        let newPlatform = {
+            x: Math.random() * (canvas.width - 100),
+            y: newPlatformY,
+            width: Math.random() * (350 - 140 + 1) + 140,
+            height: 15,
+            timer: 0,
+            falling: false,
+            hasEnemy: Math.random() < 0.05,
+            enemyType: Math.random() < 0.5 ? 'Type1' : 'Type2',
+            enemyX: 0,
+            enemyVelX: 1,
+            movingVertically: Math.random() < 0.06,
+            movingOffset: 0, // Add this line
+            movingSpeed: 0.3 // Add this line
+        };
+
+        newPlatform.enemyX = Math.random() * (newPlatform.width - 10);
+
+        platforms.push(newPlatform);
+    }
+}
             
            
             
@@ -411,6 +418,15 @@
                 if (player.y+player.height == canvas.height) {
                     gameOver();
                 }
+                if (platform.movingVertically) {
+        platform.movingOffset += platform.movingSpeed;
+        platform.y = platform.y + Math.sin(platform.movingOffset * 0.05) * 20;
+
+        // Reverse the moving direction when the platform reaches the maximum offset
+        if (platform.movingOffset >= 5 || platform.movingOffset <= -5) {
+            platform.movingSpeed *= -1;
+        }
+    }
 
             });
             
