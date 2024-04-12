@@ -99,6 +99,9 @@
         const enemyBlueImage = new Image();
         enemyBlueImage.src = 'photos/enemy.png';
 
+        const starImage = new Image();
+        starImage.src = 'photos/star.png'; // Replace with the path to your star image
+
         let topScores = [];
 
         let isGameOver = false; 
@@ -197,7 +200,9 @@
                     enemyVelX: 1,
                     movingVertically: Math.random() < 0.06,
                     movingOffset: 0, // Add this line
-                    movingSpeed: 0.3 // Add this line
+                    movingSpeed: 0.3, // Add this line
+                    hasStar: Math.random() < 0.15, // 5% chance of having a star
+                    starCollected: false, // Flag to track if the star has been collected
                 };
                 platform.enemyX = Math.random() * (platform.width - 10);
                 platforms.push(platform);
@@ -213,6 +218,10 @@
 
         let currentPlatformIndex = -1;
         let previousPlatformIndex = -1;
+
+        let countdownTimer = 0;
+        let countdownStartTime = 0;
+        const countdownDuration = 8; // Countdown duration in seconds
 
         // Platforms
         let platforms = [];
@@ -233,27 +242,29 @@
         });
 
         while (lastPlatformY > 0) {
-    let platform = {
-        x: Math.random() * (canvas.width - 100),
-        y: lastPlatformY,
-        width: Math.random() * (350 - 140 + 1) + 140,
-        height: 15,
-        timer: 0,
-        falling: false,
-        hasEnemy: Math.random() < 0.05,
-        enemyType: Math.random() < 0.5 ? 'Type1' : 'Type2',
-        enemyX: 0,
-        enemyVelX: 1,
-        movingVertically: Math.random() < 0.06,
-        movingOffset: 0, // Add this line
-        movingSpeed: 0.3 // Add this line
-    };
+            let platform = {
+                x: Math.random() * (canvas.width - 100),
+                y: lastPlatformY,
+                width: Math.random() * (350 - 140 + 1) + 140,
+                height: 15,
+                timer: 0,
+                falling: false,
+                hasEnemy: Math.random() < 0.05,
+                enemyType: Math.random() < 0.5 ? 'Type1' : 'Type2',
+                enemyX: 0, 
+                enemyVelX: 1,
+                movingVertically: Math.random() < 0.06,
+                movingOffset: 0, // Add this line
+                movingSpeed: 0.3, // Add this line
+                hasStar: Math.random() < 0.15, // 5% chance of having a star
+                starCollected: false, // Flag to track if the star has been collected
+            };
 
-    platform.enemyX = Math.random() * (platform.width - 10);
+            platform.enemyX = Math.random() * (platform.width - 10);
 
-    platforms.push(platform);
-    lastPlatformY -= platformGap;
-}
+            platforms.push(platform);
+            lastPlatformY -= platformGap;
+        }
 
         // Score
         let score = 0;
@@ -310,29 +321,31 @@
             
              // Generate new platforms
              while (platforms[platforms.length - 1].y > platformGap) {
-    let newPlatformY = platforms[platforms.length - 1].y - platformGap;
-    if (newPlatformY > 0) {
-        let newPlatform = {
-            x: Math.random() * (canvas.width - 100),
-            y: newPlatformY,
-            width: Math.random() * (350 - 140 + 1) + 140,
-            height: 15,
-            timer: 0,
-            falling: false,
-            hasEnemy: Math.random() < 0.05,
-            enemyType: Math.random() < 0.5 ? 'Type1' : 'Type2',
-            enemyX: 0,
-            enemyVelX: 1,
-            movingVertically: Math.random() < 0.06,
-            movingOffset: 0, // Add this line
-            movingSpeed: 0.3 // Add this line
-        };
+                let newPlatformY = platforms[platforms.length - 1].y - platformGap;
+                if (newPlatformY > 0) {
+                    let newPlatform = {
+                        x: Math.random() * (canvas.width - 100),
+                        y: newPlatformY,
+                        width: Math.random() * (350 - 140 + 1) + 140,
+                        height: 15,
+                        timer: 0,
+                        falling: false,
+                        hasEnemy: Math.random() < 0.05,
+                        enemyType: Math.random() < 0.5 ? 'Type1' : 'Type2',
+                        enemyX: 0,
+                        enemyVelX: 1,
+                        movingVertically: Math.random() < 0.06,
+                        movingOffset: 0, // Add this line
+                        movingSpeed: 0.3, // Add this line
+                        hasStar: Math.random() < 0.15, // 5% chance of having a star
+                        starCollected: false, // Flag to track if the star has been collected
+                    };
 
-        newPlatform.enemyX = Math.random() * (newPlatform.width - 10);
+                    newPlatform.enemyX = Math.random() * (newPlatform.width - 10);
 
-        platforms.push(newPlatform);
-    }
-}
+                    platforms.push(newPlatform);
+                }
+            }
             
            
             
@@ -408,25 +421,46 @@
                     player.x < platform.x + platform.enemyX + 10 &&
                     player.x + player.width > platform.x + platform.enemyX &&
                     player.y < platform.y &&
-                    player.y + player.height > platform.y - 10
+                    player.y + player.height > platform.y - 10 &&
+                    countdownTimer == 0
                 ) {
                     // Player dies
                     gameOver();
                 }
             }
 
-                if (player.y+player.height == canvas.height) {
-                    gameOver();
-                }
-                if (platform.movingVertically) {
-        platform.movingOffset += platform.movingSpeed;
-        platform.y = platform.y + Math.sin(platform.movingOffset * 0.05) * 20;
+            if (player.y+player.height == canvas.height) {
+                gameOver();
+            }
 
-        // Reverse the moving direction when the platform reaches the maximum offset
-        if (platform.movingOffset >= 5 || platform.movingOffset <= -5) {
-            platform.movingSpeed *= -1;
-        }
-    }
+            if (platform.movingVertically) {
+                platform.movingOffset += platform.movingSpeed;
+                platform.y = platform.y + Math.sin(platform.movingOffset * 0.05) * 20;
+
+                // Reverse the moving direction when the platform reaches the maximum offset
+                if (platform.movingOffset >= 5 || platform.movingOffset <= -5) {
+                    platform.movingSpeed *= -1;
+                }
+            }
+
+            // Check collision with stars
+            if (platform.hasStar && !platform.starCollected) {
+                const starX = platform.x + platform.width / 2 - 15;
+                const starY = platform.y - 30;
+                const starWidth = 30;
+                const starHeight = 30;
+
+                if (
+                    player.x < starX + starWidth &&
+                    player.x + player.width > starX &&
+                    player.y + player.height > starY &&
+                    player.y < starY + starHeight
+                ) {
+                    platform.starCollected = true;
+                    countdownStartTime = Date.now();
+                    countdownTimer = countdownDuration;
+                }
+            }
 
             });
             
@@ -451,7 +485,39 @@
                     const enemyImage = platform.enemyType === 'Type1' ? enemyGreenImage : enemyBlueImage;
                     ctx.drawImage(enemyImage, platform.x + platform.enemyX, platform.y - 30, 30, 30);
                 }
+                if (platform.hasStar && !platform.starCollected) {
+                    ctx.drawImage(starImage, platform.x + platform.width / 2 - 15, platform.y - 30, 15, 15);
+                }
             });
+
+            // Display countdown
+            if (countdownTimer > 0) {
+                const counterWidth = canvas.width / 3;
+                const counterX = canvas.width / 2 - counterWidth / 2;
+                const counterY = 25;
+
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.fillRect(counterX, 0, counterWidth, 50); // Draw a white rectangle at the top center of the canvas
+
+                ctx.fillStyle = 'black';
+                ctx.font = '20px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+
+                const protectForText = 'Protect for:';
+                ctx.fillText(protectForText, counterX + counterWidth / 2, counterY-10); // Draw "Protect for:" text
+
+                const timerText = countdownTimer.toFixed(1);
+                const timerWidth = ctx.measureText(timerText).width;
+                ctx.fillText(timerText, counterX + counterWidth / 2 , counterY +10); // Draw countdown timer
+
+                const elapsedTime = (Date.now() - countdownStartTime) / 1000;
+                countdownTimer = countdownDuration - elapsedTime;
+
+                if (countdownTimer <= 0) {
+                    countdownTimer = 0;
+                }
+            }
 
             // Display platform height
             ctx.fillStyle = 'white';
