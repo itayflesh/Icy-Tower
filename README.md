@@ -4,7 +4,7 @@
 
 https://drive.google.com/file/d/1iQwX5tztLh6_TyMfzMPc1aL1-s7aK_Rj/view?usp=share_link
 
-This project is a modified clone of the popular game 'Icy Tower', implemented in JavaScript. It features a player character who must jump from platform to platform, climbing as high as possible while avoiding obstacles and enemies. The game includes various power-ups, different types of platforms, and a scoring system.
+This project is a modified clone of the popular game 'Icy Tower', implemented using HTML5 Canvas and JavaScript. It features a player character who must jump from platform to platform, climbing as high as possible while avoiding obstacles and enemies. The game includes various power-ups, different types of platforms, and a scoring system.
 
 ## Installation and Requirements
 
@@ -33,6 +33,13 @@ To run this game, you need:
 - Collect power-ups and avoid enemies
 - Your score increases as you climb higher
 
+## Project Structure
+- `index.html`: The main HTML file for the game
+  - Contains the game's HTML structure
+  - Includes embedded JavaScript code that controls the game logic
+- `photos/`: Directory containing image assets used in the game
+  - This folder includes all the graphical elements such as the player character, platforms, background, enemies, and power-ups
+
 ## Features
 - Score tracking system
 - Falling platforms (if stood on for more than 3 seconds)
@@ -46,8 +53,17 @@ To run this game, you need:
 
 ## Technologies Used
 - HTML5
-- CSS3
-- JavaScript
 - Canvas API for rendering graphics
+- JavaScript (embedded in HTML file)
+  - Used for game logic, including:
+    - Player movement and physics
+    - Platform generation and behavior
+    - Enemy AI
+    - Collision detection
+    - Score tracking
+    - Game state management
+- CSS (minimal, embedded in HTML file)
 - Local Storage for saving high scores
+
+
 
